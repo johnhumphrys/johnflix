@@ -1,0 +1,12 @@
+.env
+/.idea/
+/bazarr/
+/gluetun/
+/heimdall/
+/jackett/
+/mounts/
+/plex/
+/plex-meta-manager/
+/qbittorrent/
+/radarr/
+/sonarr/
