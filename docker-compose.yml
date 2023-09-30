@@ -40,7 +40,7 @@ services:
       - ./jackett/config:/config
       - ./jackett/downloads:/downloads
         # ports:
-        #- 9117:9117
+      #- 9117:9117
     restart: unless-stopped
 
   qbittorrent:
@@ -58,7 +58,7 @@ services:
         # ports:
         #- 6881:6881
         #- 6881:6881/udp
-        #- 8080:8080
+      #- 8080:8080
     restart: unless-stopped
 
   bazarr:
@@ -123,7 +123,6 @@ services:
       - ./mounts/media/kids:/kids
       - ./mounts/media/movies:/movies
       - ./mounts/media/video:/video
-
     restart: unless-stopped
 
   plex-meta-manager:
