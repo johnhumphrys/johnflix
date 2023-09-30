@@ -1,0 +1,150 @@
+version: "2.1"
+services:
+  gluetun:
+    container_name: gluetun
+    image: qmcgaw/gluetun:${GLUETUN_VERSION}
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8888:8888/tcp" # HTTP proxy
+      - "8388:8388/tcp" # Shadowsocks
+      - "8388:8388/udp" # Shadowsocks
+      - "9117:9117/tcp" # Jackett
+      - "8080:8080/tcp" # qbittorrent
+      - "6881:6881/tcp" # qbittorrent
+      - "6881:6881/udp" # qbittorrent
+    volumes:
+      - ./gluetun/:/gluetun
+    environment:
+      # See https://github.com/qdm12/gluetun/wiki
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=openvpn
+      # OpenVPN:
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - COUNTRY=${OPENVPN_COUNTRY}
+      # Wireguard:
+      # - WIREGUARD_PRIVATE_KEY=
+      # - WIREGUARD_ADDRESS=
+      - TZ=${TIMEZONE}
+
+  jackett:
+    image: lscr.io/linuxserver/jackett:${JACKETT_VERSION}
+    network_mode: service:gluetun
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+    volumes:
+      - ./jackett/config:/config
+      - ./jackett/downloads:/downloads
+        # ports:
+        #- 9117:9117
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:${QBITTORRENT_VERSION}
+    network_mode: service:gluetun
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+      - WEBUI_PORT=8080
+    volumes:
+      - ./qbittorrent/config:/config
+      - ./mounts/cache/qbittorrent/downloads/:/downloads
+        # ports:
+        #- 6881:6881
+        #- 6881:6881/udp
+        #- 8080:8080
+    restart: unless-stopped
+
+  bazarr:
+    image: ghcr.io/linuxserver/bazarr:${BAZARR_VERSION}
+    container_name: bazarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+    volumes:
+      - ./bazarr/config:/config
+      - ./mounts/media/movies/:/movies
+      - ./mounts/media/tv/:/tv
+    ports:
+      - "6767:6767"
+    restart: unless-stopped
+
+  radarr:
+    image: linuxserver/radarr:${RADARR_VERSION}
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+      - UMASK_SET=022 #optional
+    volumes:
+      - ./radarr/config/:/config
+      - ./mounts/media/movies/:/movies
+      - ./mounts/media/kids/:/kids
+      - ./mounts/cache/qbittorrent/downloads/:/downloads
+    ports:
+      - "7878:7878"
+    restart: unless-stopped
+
+  sonarr:
+    image: ghcr.io/linuxserver/sonarr:${SONARR_VERSION}
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+    volumes:
+      - ./sonarr/config:/config
+      - ./mounts/media/tv:/tv
+      - ./mounts/cache/qbittorrent/downloads:/downloads
+    ports:
+      - "8989:8989"
+    restart: unless-stopped
+
+  plex:
+    image: ghcr.io/linuxserver/plex:${PLEX_VERSION}
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - TZ=${TIMEZONE}
+    volumes:
+      - ./plex/config:/config
+      - ./mounts/media/tv:/tv
+      - ./mounts/media/kids:/kids
+      - ./mounts/media/movies:/movies
+      - ./mounts/media/video:/video
+
+    restart: unless-stopped
+
+  plex-meta-manager:
+    image: linuxserver/plex-meta-manager:${PLEX_META_MANAGER_VERSION}
+    container_name: plex-meta-manager
+    environment:
+      - TZ=${TIMEZONE}
+    restart: unless-stopped
+    volumes:
+      - ./plex-meta-manager/:/config:rw
+
+  heimdall:
+    image: linuxserver/heimdall:${HEIMDALL_VERSION}
+    container_name: heimdall
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+    volumes:
+      - ./heimdall/config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
