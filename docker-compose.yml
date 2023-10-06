@@ -154,6 +154,7 @@ services:
       ytdl_use_local_db: 'false'
       write_ytdl_config: 'true'
     restart: unless-stopped
+    container_name: ytdl-material
     depends_on:
       - ytdl-mongo-db
     volumes:
