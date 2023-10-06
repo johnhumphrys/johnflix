@@ -147,3 +147,30 @@ services:
       - "80:80"
       - "443:443"
     restart: unless-stopped
+
+  ytdl_material:
+    environment:
+      ytdl_mongodb_connection_string: 'mongodb://ytdl-mongo-db:27017'
+      ytdl_use_local_db: 'false'
+      write_ytdl_config: 'true'
+    restart: unless-stopped
+    depends_on:
+      - ytdl-mongo-db
+    volumes:
+      - ./ytdl_material/appdata:/app/appdata
+      - ./mounts/media/video/ytdl/audio:/app/audio
+      - ./mounts/media/video/ytdl/video:/app/video
+      - ./mounts/media/video/ytdl/subscriptions:/app/subscriptions
+      - ./ytdl_material/users:/app/users
+    ports:
+      - "17442:17442"
+    image: tzahi12345/youtubedl-material:${YTDL_MATERIAL_VERSION}
+
+  ytdl-mongo-db:
+    image: mongo:${YTDL_MONGO_VERSION}
+    logging:
+      driver: "none"
+    container_name: ytdl-mongo-db
+    restart: unless-stopped
+    volumes:
+      - ./ytdl-db/:/data/db
